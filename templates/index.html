@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Global market data and historical price monitoring dashboard powered by Twelve Data."
+    />
+    <title>HFT Arbitrage Lab · Global Market Data</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="HFT Arbitrage Lab home">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>
+            <strong>HFT ARBITRAGE LAB</strong>
+            <small>Global Market Data &amp; Arbitrage Monitoring Dashboard</small>
+          </span>
+        </a>
+        <div class="topbar-meta">
+          <span class="environment-label">EDUCATIONAL SIMULATION</span>
+          <span class="api-status status-unknown" id="apiStatus">
+            <span class="status-dot"></span>
+            <span id="apiStatusLabel">CHECKING API</span>
+          </span>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <section class="intro-row">
+          <div>
+            <p class="eyebrow">MARKET DATA TERMINAL <span></span> GLOBAL</p>
+            <h1>Search the market.<br /><em>Read the signal.</em></h1>
+            <p class="intro-copy">
+              Search actual instruments from Twelve Data, then inspect the latest
+              available quote and historical price movement.
+            </p>
+          </div>
+          <div class="session-note">
+            <span class="note-line"></span>
+            <p>DATA SOURCE</p>
+            <strong>TWELVE DATA API</strong>
+            <small>Manual refresh only · no trades executed</small>
+          </div>
+        </section>
+
+        <section class="search-panel panel">
+          <div class="section-heading">
+            <div>
+              <span class="section-index">01</span>
+              <h2>Search instrument</h2>
+            </div>
+            <span class="section-hint">SYMBOL OR COMPANY NAME</span>
+          </div>
+          <form class="search-form" id="searchForm">
+            <label class="search-input-wrap">
+              <span class="search-icon" aria-hidden="true"></span>
+              <input
+                id="searchInput"
+                type="search"
+                placeholder="Search stock or company..."
+                autocomplete="off"
+                maxlength="80"
+              />
+            </label>
+            <button class="button button-primary" type="submit" id="searchButton">
+              <span>Search market</span><span class="button-arrow" aria-hidden="true">↗</span>
+            </button>
+          </form>
+          <div class="popular-row">
+            <span>QUICK SEARCH</span>
+            <button type="button" class="quick-symbol" data-symbol="AAPL">Apple — AAPL</button>
+            <button type="button" class="quick-symbol" data-symbol="MSFT">Microsoft — MSFT</button>
+            <button type="button" class="quick-symbol" data-symbol="NVDA">NVIDIA — NVDA</button>
+            <button type="button" class="quick-symbol" data-symbol="AMZN">Amazon — AMZN</button>
+            <button type="button" class="quick-symbol" data-symbol="TSLA">Tesla — TSLA</button>
+          </div>
+        </section>
+
+        <section class="results-section hidden" id="resultsSection">
+          <div class="section-heading compact-heading">
+            <div>
+              <span class="section-index">02</span>
+              <h2>Matching instruments</h2>
+            </div>
+            <span class="result-count" id="resultCount"></span>
+          </div>
+          <div class="results-list" id="resultsList"></div>
+        </section>
+
+        <div class="loading-message hidden" id="globalLoading" role="status"></div>
+        <div class="error-message hidden" id="globalError" role="alert"></div>
+
+        <section class="selected-section hidden" id="selectedSection">
+          <div class="section-heading compact-heading">
+            <div>
+              <span class="section-index">03</span>
+              <h2>Selected instrument</h2>
+            </div>
+            <button class="button button-ghost" type="button" id="refreshButton">
+              <span class="refresh-icon" aria-hidden="true">↻</span>
+              Refresh data
+            </button>
+          </div>
+
+          <div class="instrument-header panel">
+            <div>
+              <p class="eyebrow">LIVE INSTRUMENT</p>
+              <h2 id="companyName">—</h2>
+              <div class="instrument-meta">
+                <span id="instrumentSymbol">—</span>
+                <b>·</b>
+                <span id="instrumentExchange">—</span>
+                <b>·</b>
+                <span id="instrumentCountry">—</span>
+              </div>
+            </div>
+            <div class="instrument-aside">
+              <span>MARKET STATUS</span>
+              <strong id="marketStatus" class="market-unknown">Unknown</strong>
+              <small id="quoteTimestamp">Latest available quote</small>
+              <small class="data-badge hidden" id="quoteSourceBadge"></small>
+            </div>
+          </div>
+
+          <div class="quote-grid" id="quoteGrid">
+            <article class="quote-card quote-primary">
+              <span>Current price</span>
+              <strong id="quotePrice">N/A</strong>
+              <small id="quoteCurrency">Currency N/A</small>
+            </article>
+            <article class="quote-card">
+              <span>Change</span>
+              <strong id="quoteChange">N/A</strong>
+              <small id="quoteChangePercent">N/A</small>
+            </article>
+            <article class="quote-card">
+              <span>Open</span>
+              <strong id="quoteOpen">N/A</strong>
+              <small>Session open</small>
+            </article>
+            <article class="quote-card">
+              <span>High / low</span>
+              <strong id="quoteHighLow">N/A / N/A</strong>
+              <small>Day range</small>
+            </article>
+            <article class="quote-card">
+              <span>Previous close</span>
+              <strong id="quotePreviousClose">N/A</strong>
+              <small>Prior session</small>
+            </article>
+            <article class="quote-card">
+              <span>Volume</span>
+              <strong id="quoteVolume">N/A</strong>
+              <small>Trading volume</small>
+            </article>
+          </div>
+
+          <div class="chart-panel panel">
+            <div class="chart-toolbar">
+              <div>
+                <p class="eyebrow">PRICE HISTORY</p>
+                <h2 id="chartTitle">Price movement</h2>
+                <small class="data-badge hidden" id="chartSourceBadge"></small>
+              </div>
+              <div class="range-controls" role="group" aria-label="Chart time range">
+                <button type="button" class="range-button" data-range="1D">1D</button>
+                <button type="button" class="range-button" data-range="1W">1W</button>
+                <button type="button" class="range-button active" data-range="1M">1M</button>
+                <button type="button" class="range-button" data-range="3M">3M</button>
+                <button type="button" class="range-button" data-range="1Y">1Y</button>
+              </div>
+            </div>
+            <div class="chart-state" id="chartState">
+              <span class="chart-loader"></span>
+              <p>Select an instrument to load historical data.</p>
+            </div>
+            <div class="chart-wrap hidden" id="chartWrap">
+              <canvas id="priceChart" aria-label="Historical price chart"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <section class="disclaimer">
+          <span class="disclaimer-mark">!</span>
+          <div>
+            <strong>Academic / educational simulation</strong>
+            <p>
+              This dashboard is for learning and demonstration only. It is not
+              financial advice and does not execute real trades.
+            </p>
+          </div>
+          <span class="disclaimer-end">NO EXECUTION</span>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <span>HFT ARBITRAGE LAB</span>
+        <span>MARKET DATA AVAILABILITY VARIES BY API PLAN</span>
+        <span>© 2026</span>
+      </footer>
+    </div>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  </body>
+</html>
